@@ -10,64 +10,62 @@ library(sf)
 library(rgdal)
 library(spatstat)
 library(maptools)
+library(leaflet)
 
 # Import Data
 
-### Childcare Centres and MRT as Example
+### A few PDD Buildings as example
 
-Schools <- read_csv("data/Aspatial/Schools.csv")
+PDD_Buildings <- read_csv("data/Aspatial/PDD_Buildings.csv")
 
-Schools <- st_as_sf(Schools, coords = c("LONGITUDE", "LATITUDE"), crs = 4326) %>%
+PDD_Buildings <- st_as_sf(PDD_Buildings, coords = c("LONGITUDE", "LATITUDE"), crs = 4326) %>%
   st_transform(crs = 3414)
+
 
 # Filter by individual systems (e.g. BMS (Y/N) etc)
 
-School_BMS <- Schools[Schools$`BUILDING MANAGEMENT SYSTEM` == 'Y', ]
-
-School_BMS <- as(School_BMS, "Spatial")
-
-School_ST <- Schools[Schools$`SMART TOILET` == 'Y', ]
-
-School_ST <- as(School_ST, "Spatial")
-
-School_SS <- Schools[Schools$`SMART SENSORING` == 'Y', ]
-
-School_SS <- as(School_SS, "Spatial")
-
-# 2 SYSTEM PAIRS
-
-School_BMS_ST <- Schools[(Schools$`SMART TOILET` == 'Y') & (Schools$`BUILDING MANAGEMENT SYSTEM` == 'Y') , ]
-
-School_BMS_ST <- as(School_BMS_ST, "Spatial")
-
-School_BMS_SS <- Schools[(Schools$`SMART SENSORING` == 'Y') & (Schools$`BUILDING MANAGEMENT SYSTEM` == 'Y') , ]
-
-School_BMS_SS <- as(School_BMS_SS, "Spatial")
-
-School_ST_SS <- Schools[(Schools$`SMART SENSORING` == 'Y') & (Schools$`SMART TOILET` == 'Y') , ]
-
-School_ST_SS <- as(School_ST_SS, "Spatial")
-
-# 3 SYSTEMS
-
-School_Max <- as(Schools, "Spatial")
+# School_BMS <- Schools[Schools$`BUILDING MANAGEMENT SYSTEM` == 'Y', ]
+# 
+# School_BMS <- as(School_BMS, "Spatial")
+# 
+# School_ST <- Schools[Schools$`SMART TOILET` == 'Y', ]
+# 
+# School_ST <- as(School_ST, "Spatial")
+# 
+# School_SS <- Schools[Schools$`SMART SENSORING` == 'Y', ]
+# 
+# School_SS <- as(School_SS, "Spatial")
 
 # Filter by SMART FM SYSTEMS
 
-School_3 <- filter(Schools, grepl('BMS', `SMART FM SYSTEMS`))
+# School_3 <- filter(Schools, grepl('BMS', `SMART FM SYSTEMS`))
+# 
+# School_3 <- as(School_3, "Spatial")
 
-School_3 <- as(School_3, "Spatial")
+### Punggol Boundary
+
+MPSZ <- st_read(dsn = "data", 
+              layer = "MP14_SUBZONE_WEB_PL")
+
+PG <- MPSZ[MPSZ$`PLN_AREA_N` == 'PUNGGOL', ]
+
+PG <- st_union(PG)
+
+Punggol_Boundary <- as_Spatial(PG)
 
 ### Punggol Digital District Boundary
 
-mpsz <- st_read(dsn = "data", 
-                layer = "MP14_SUBZONE_WEB_PL")
+PDD <- st_read(dsn = "data", 
+                layer = "PDD_Boundary")
 
-mpsz = as_Spatial(mpsz)
+PDD <- st_zm(PDD, drop = TRUE, what = "ZM")
 
-pg = mpsz[mpsz@data$PLN_AREA_N == "PUNGGOL",]
+Punggol_Digital_District_Boundary <- as_Spatial(PDD)
 
-pg = st_union(st_as_sf(pg))
+### Icons
+
+# FMIcons <- iconList(CBRE = makeIcon("http://globetrotterlife.org/blog/wp-content/uploads/leaflet-maps-marker-icons/ferry-18.png", 18, 18),
+#                     JLL = makeIcon("http://globetrotterlife.org/blog/wp-content/uploads/leaflet-maps-marker-icons/danger-24.png", 24, 24))
 
 # UI
 ui <- fluidPage(theme = shinytheme("lumen"),
@@ -139,6 +137,13 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                                                                 "Jurong Lake District" = "JLD",
                                                                                 "Jurong Innovation District" = "JID"),
                                                                     selected = "PDD"),
+                                                        selectInput(inputId = "FM_Vendor",
+                                                                    label = "Select Facility Management Vendor",
+                                                                    choices = c("CBRE" = "CBRE",
+                                                                                "JLL" = "JLL",
+                                                                                "ISS A/S" = "ISS A/S",
+                                                                                "SODEXO" = "SODEXO"),
+                                                                    selected = c("CBRE", "JLL", "ISS A/S", "SODEXO"), multiple = T),
                                                         selectInput(inputId = "Building_Systems",
                                                                     label = "Select Building Systems (Multi-Select)",
                                                                     choices = c("Building Management System" = "BMS",
@@ -174,22 +179,13 @@ ui <- fluidPage(theme = shinytheme("lumen"),
 
 server <- function(input, output, session){
   
+   FM_Vendor_Var <- reactive({
+        PDD_Buildings %>%
+          filter(`FACILITY MANAGEMENT VENDOR` %in% input$FM_Vendor)
+  })
   
   # Smart FM Map
   output$SmartFM_Map <- renderTmap({
-    
-    Building_Systems_var <- reactive({
-                            if (input$Building_Systems == "BMS"){
-                              dataset <- School_BMS
-                            }
-                            else if (input$Building_Systems == "SS"){
-                              dataset <- School_SS
-                            }
-                            else if (input$Building_Systems == "ST"){
-                              dataset <- School_ST
-                            }
-                            return(dataset)
-                          })
     
     icon <- reactive({
             if (input$Building_Systems == "BMS"){
@@ -205,16 +201,34 @@ server <- function(input, output, session){
           })
           
     tmap_mode('view')
-    
-    Map_Tracker <- tm_shape(pg) +
+
+# popup.vars() is to hide away unneeded columns    
+        
+    Map_Tracker <- tm_shape(Punggol_Boundary) +
+      tm_polygons(alpha = 0.1, border.col = "red", lwd = 1.5, lty = "dotted") +
+      tm_shape(Punggol_Digital_District_Boundary) +
       tm_polygons(alpha = 0.1, border.col = "red", lwd = 2) +
-      tm_shape(Building_Systems_var()) +
-      tm_symbols(shape = icon(), size = 0.4) +
+      tm_shape(FM_Vendor_Var()) +
+      tm_symbols(col = "FACILITY MANAGEMENT VENDOR", size = 0.4, popup.vars = c("Name of Building" = "NAME OF BUILDING", "Address" = "ADDRESS", "Typology" = "TYPOLOGY",
+                                                            "Age of Building" = "AGE OF BUILDING", "Green Mark Award" = "GREEN MARK AWARD", "Year Of Certification" = "YEAR OF CERTIFICATION",
+                                                            "Gross Floor Area" = "GROSS FLOOR AREA", "% of AC Floor Area" = "% OF AC FLOOR AREA", "Avg. Monthly Occupancy Rate" = "AVG. MONTHLY BUILDING OCCUPANCY RATE",
+                                                            "Latest Energy Use (EUI)" = "LATEST ENERGY USE INTENSITY (EUI)", "Facility Management Vendor" = "FACILITY MANAGEMENT VENDOR", "Number of Smart FM Systems" = "NUMBER OF SMART FM SYSTEMS",
+                                                            "Building Management System" = "BUILDING MANAGEMENT SYSTEM", "Air Conditioning & Mechanical Ventilation System" = "AIR CONDITIONING & MECHANICAL VENTILATION SYSTEM",
+                                                            "Electrical & Energy Management System" = "ELECTRICAL & ENERGY MANAGEMENT SYSTEM", "Security & Occupancy System" = "SECURITY & OCCUPANCY SYSTEM",
+                                                            "Plumbing Management System" = "PLUMBING MANAGEMENT SYSTEM", "Recency of Data" = "RECENCY OF DATA")) +
       tmap_options(basemaps = c("Esri.WorldGrayCanvas","OpenStreetMap", "Stamen.TonerLite"),
                    basemaps.alpha = c(0.8, 0.8, 0.8)) +
       tm_view(set.zoom.limits = c(14,16))
     
   })
+  
+  # output$testMap <- renderLeaflet({
+  #   leaflet(filteredData()) %>%
+  #     addTiles(group = 'OSM') %>%
+  #     addMarkers(
+  #       icon = ~FMIcons[input$FM_Vendor]
+  #     )
+  # })
   
 }
 

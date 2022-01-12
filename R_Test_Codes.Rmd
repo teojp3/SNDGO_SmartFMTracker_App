@@ -1,0 +1,37 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r results='hide'}
+packages = c('readr','sp', 'sf', 'rgdal', 'spNetwork', 'tmap', 'FNN', 'spatstat', "raster")
+  for (p in packages)
+  {
+    if(!require(p, character.only = T)){
+    install.packages(p)
+  }
+  library(p,character.only = T)
+}
+```
+
+
+```{r}
+PDD_Buildings <- read_csv("data/Aspatial/PDD_Buildings.csv")
+
+PDD_Buildings <- st_as_sf(PDD_Buildings, coords = c("LONGITUDE", "LATITUDE"), crs = 4326) %>%
+  st_transform(crs = 3414)
+```
+
+```{r}
+MPSZ <- st_read(dsn = "data", 
+              layer = "MP14_SUBZONE_WEB_PL")
+
+PG <- MPSZ[MPSZ$`PLN_AREA_N` == 'PUNGGOL', ]
+
+PG <- as_Spatial(PG)
+```
+
