@@ -14,33 +14,7 @@ library(leaflet)
 
 # Import Data
 
-### A few PDD Buildings as example
-
-PDD_Buildings <- read_csv("data/Aspatial/PDD_Buildings.csv")
-
-PDD_Buildings <- st_as_sf(PDD_Buildings, coords = c("LONGITUDE", "LATITUDE"), crs = 4326) %>%
-  st_transform(crs = 3414)
-
-
-# Filter by individual systems (e.g. BMS (Y/N) etc)
-
-# School_BMS <- Schools[Schools$`BUILDING MANAGEMENT SYSTEM` == 'Y', ]
-# 
-# School_BMS <- as(School_BMS, "Spatial")
-# 
-# School_ST <- Schools[Schools$`SMART TOILET` == 'Y', ]
-# 
-# School_ST <- as(School_ST, "Spatial")
-# 
-# School_SS <- Schools[Schools$`SMART SENSORING` == 'Y', ]
-# 
-# School_SS <- as(School_SS, "Spatial")
-
-# Filter by SMART FM SYSTEMS
-
-# School_3 <- filter(Schools, grepl('BMS', `SMART FM SYSTEMS`))
-# 
-# School_3 <- as(School_3, "Spatial")
+# BOUNDARIES of Districts #
 
 ### Punggol Boundary
 
@@ -62,12 +36,46 @@ PDD <- st_zm(PDD, drop = TRUE, what = "ZM")
 
 Punggol_Digital_District_Boundary <- as_Spatial(PDD)
 
-### Icons
+### Jurong Lake District Boundary
 
-# FMIcons <- iconList(CBRE = makeIcon("http://globetrotterlife.org/blog/wp-content/uploads/leaflet-maps-marker-icons/ferry-18.png", 18, 18),
-#                     JLL = makeIcon("http://globetrotterlife.org/blog/wp-content/uploads/leaflet-maps-marker-icons/danger-24.png", 24, 24))
+JLD <- st_read(dsn = "data/JLD Boundary", 
+               layer = "JLD_Boundary")
+
+JLD <- st_zm(JLD, drop = TRUE, what = "ZM")
+
+Jurong_Lake_District_Boundary <- as_Spatial(JLD)
+
+### Jurong Innovation District Boundary
+
+JID <- st_read(dsn = "data/JID Boundary", 
+               layer = "JID_Boundary")
+
+JID <- st_zm(JID, drop = TRUE, what = "ZM")
+
+Jurong_Innovation_District_Boundary <- as_Spatial(JID)
+
+# Buildings located in Districts #
+
+### PDD Buildings
+
+Buildings <- read_csv("data/Aspatial/Buildings.csv")
+
+Buildings <- st_as_sf(Buildings, coords = c("LONGITUDE", "LATITUDE"), crs = 4326) %>%
+  st_transform(crs = 3414)
+
+### JLD Buildings
+
+JLD_Buildings <- st_read(dsn = "data/JLD Boundary", 
+               layer = "JLD_Buildings")
+
+JLD_Buildings <- st_zm(JLD_Buildings, drop = TRUE, what = "ZM")
+
+JLD_Buildings <- as_Spatial(JLD_Buildings)
+
+
 
 # UI
+
 ui <- fluidPage(theme = shinytheme("lumen"),
                 useShinyjs(),
                 # Navigation Bar
@@ -130,17 +138,16 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                            sidebarLayout(position = 'right',
                                          sidebarPanel(fluid = TRUE, width = 3,
                                                                    
-                                                         # If Kernel Density Estimation tabPanel is clicked, the sidebarpanel below will be shown
+                                                         # If By FM Vendor tabPanel is clicked, the sidebarpanel below will be shown
                                                       conditionalPanel(
                                                         'input.SmartFM_Var === "By FM Vendor"',
-                                                      
                                                         tags$strong("FM Vendor Tracker Variable Inputs"),
-                                                        selectInput(inputId = "Area_Of_Study",
+                                                        selectInput(inputId = "Vendor_Area_Of_Study",
                                                                     label = "Select Area of Study",
-                                                                    choices = c("Punggol Digital District" = "PDD",
-                                                                                "Jurong Lake District" = "JLD",
+                                                                    choices = c("Jurong Lake District" = "JLD",
+                                                                                "Punggol Digital District" = "PDD",
                                                                                 "Jurong Innovation District" = "JID"),
-                                                                    selected = "PDD"),
+                                                                    selected = "JLD"),
                                                         selectInput(inputId = "FM_Vendor",
                                                                     label = "Select Facility Management Vendor",
                                                                     choices = c("CBRE" = "CBRE",
@@ -148,22 +155,26 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                                                                 "ISS A/S" = "ISS A/S",
                                                                                 "SODEXO" = "SODEXO"),
                                                                     selected = c("CBRE", "JLL", "ISS A/S", "SODEXO"), multiple = T),
+                                                        img(src = 'Vendors_Legend.png', height = "100%", width = "100%", 
+                                                            style="display: block; margin-left: auto; margin-right: auto;"),
                                                       ),
                                                       
                                                       conditionalPanel(
                                                         'input.SmartFM_Var === "By Number of FM Systems"',
                                                         
                                                         tags$strong("FM Systems Tracker Variable Inputs"),
-                                                        #helpText("Click the Kernel Density Estimation Tab to see the changes)
-                                                        selectInput(inputId = "Area_Of_Study2",
+                                                        #helpText("Click the By Number of FM Systems Tab to see the changes)
+                                                        selectInput(inputId = "Systems_Area_Of_Study",
                                                                     label = "Select Area of Study",
-                                                                    choices = c("Punggol Digital District" = "PDD",
-                                                                                "Jurong Lake District" = "JLD",
+                                                                    choices = c("Jurong Lake District" = "JLD",
+                                                                                "Punggol Digital District" = "PDD",
                                                                                 "Jurong Innovation District" = "JID"),
-                                                                    selected = "PDD"),
+                                                                    selected = "JLD"),
                                                         sliderInput(inputId = "FM_Systems_Count", 
                                                                     label = "Number of Smart FM Systems", 
-                                                                    value = c(0, 5), min = 0, max = 5),
+                                                                    value = c(0, 7), min = 0, max = 7),
+                                                        img(src = 'Systems_Legend.png', height = "100%", width = "100%", 
+                                                            style="display: block; margin-left: auto; margin-right: auto;"),
                                                       )),
                                                       
                                          mainPanel(width = 9,
@@ -173,9 +184,10 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                                               column(12,
                                                                      h6(tags$strong("Note:")),
                                                                      h6(tags$i("Please wait a short while for the default map to load.")),
-                                                                     h6(tags$i("Area of Study: Punggol Digital District is used to plot the default map,
+                                                                     h6(tags$i("Area of Study: Jurong Lake District and Facility Management Vendor: All is used to plot the default map,
                                                                         select alternative choices to update the map.")),
                                                                      tmapOutput("Vendor_Map"),
+                                                                     tags$br(),
                                                              tabsetPanel(
                                                                id = "SmartFM_Info",
                                                                tabPanel("About the Map Visualisation",
@@ -192,16 +204,17 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                                               column(12,
                                                                      h6(tags$strong("Note:")),
                                                                      h6(tags$i("Please wait a short while for the default map to load.")),
-                                                                     h6(tags$i("Area of Study: Punggol Digital District is used to plot the default map,
+                                                                     h6(tags$i("Area of Study: Jurong Lake District and Range: 0 to 7 is used to plot the default map,
                                                                         select alternative choices to update the map.")),
                                                                      tmapOutput("Systems_Map"),
+                                                                     tags$br(),
                                                                      tabsetPanel(
                                                                        id = "SmartFM_Info2",
                                                                        tabPanel("About the Map Visualisation",
                                                                                 column(12,
                                                                                        h2("What can you infer from the Map Visualisation?"),
                                                                                        tags$br(),
-                                                                                       h4("The demarcation in red sets the boundaries of the chosen Area of Study (e.g. Punggol Digital District)."),
+                                                                                       h4("The demarcation in red sets the boundaries of the chosen Area of Study (e.g. Jurong LakeDistrict)."),
                                                                                        h4("The numerous points on the map illustrates the georeferenced locations of the smart buildings in the area of study, 
                                                                                   with relevant Smart FM systems that we can take reference from."),
                                                                         )))
@@ -214,39 +227,61 @@ ui <- fluidPage(theme = shinytheme("lumen"),
 
 server <- function(input, output, session){
   
+  # FM Vendor (Reactive Variable)
+  
   FM_Vendor_Var <- reactive({
-        PDD_Buildings %>%
+    
+        Buildings %>%
+        filter(`DISTRICT` %in% input$Vendor_Area_Of_Study) %>%
           filter(`FACILITY MANAGEMENT VENDOR` %in% input$FM_Vendor)
-  })
-   
-  # FM Vendor Map
-  output$Vendor_Map <- renderTmap({
-          
-    tmap_mode('view')
-
-# popup.vars() is to hide away unneeded columns    
-        
-    Map_Tracker <- tm_shape(Punggol_Boundary) +
-      tm_polygons(alpha = 0.1, border.col = "red", lwd = 1.5, lty = "dotted") +
-      tm_shape(Punggol_Digital_District_Boundary) +
-      tm_polygons(alpha = 0.1, border.col = "red", lwd = 2) +
-      tm_shape(FM_Vendor_Var()) +
-      tm_symbols(col = "FACILITY MANAGEMENT VENDOR", size = "GROSS FLOOR AREA", alpha = 0.7, 
-                 popup.vars = c("Name of Building" = "NAME OF BUILDING", "Address" = "ADDRESS", "Typology" = "TYPOLOGY",
-                                                            "Age of Building" = "AGE OF BUILDING", "Green Mark Award" = "GREEN MARK AWARD", "Year Of Certification" = "YEAR OF CERTIFICATION",
-                                                            "Gross Floor Area" = "GROSS FLOOR AREA", "% of AC Floor Area" = "% OF AC FLOOR AREA", "Avg. Monthly Occupancy Rate" = "AVG. MONTHLY BUILDING OCCUPANCY RATE",
-                                                            "Latest Energy Use (EUI)" = "LATEST ENERGY USE INTENSITY (EUI)", "Facility Management Vendor" = "FACILITY MANAGEMENT VENDOR", "Number of Smart FM Systems" = "NUMBER OF SMART FM SYSTEMS",
-                                                            "Building Management System" = "BUILDING MANAGEMENT SYSTEM", "Air Conditioning & Mechanical Ventilation System" = "AIR CONDITIONING & MECHANICAL VENTILATION SYSTEM",
-                                                            "Electrical & Energy Management System" = "ELECTRICAL & ENERGY MANAGEMENT SYSTEM", "Security & Occupancy System" = "SECURITY & OCCUPANCY SYSTEM",
-                                                            "Plumbing Management System" = "PLUMBING MANAGEMENT SYSTEM", "Recency of Data" = "RECENCY OF DATA")) +
-      tmap_options(basemaps = c("Esri.WorldGrayCanvas","OpenStreetMap", "Stamen.TonerLite"),
-                   basemaps.alpha = c(0.8, 0.8, 0.8)) +
-      tm_view(set.zoom.limits = c(14,16))
     
   })
+  
+  # FM Vendor Map
+  
+  output$Vendor_Map <- renderTmap({
+    
+    tmap_mode('view')
+    
+    Vendor_District <- reactive({
+      
+                      if (input$Vendor_Area_Of_Study == "JLD"){
+                        Vendor_District <- Jurong_Lake_District_Boundary
+                      }
+                      else if (input$Vendor_Area_Of_Study == "JID"){
+                        Vendor_District <- Jurong_Innovation_District_Boundary
+                      }
+                      else if (input$Vendor_Area_Of_Study == "PDD"){
+                        Vendor_District <- Punggol_Digital_District_Boundary
+                      }
+                      return(Vendor_District)
+                    })
+    
+    Map_Tracker <- tm_shape(Vendor_District()) +
+                   tm_polygons(alpha = 0.1, border.col = "red", lwd = 2, popup.vars = F, interactive = F) +
+                   tm_shape(FM_Vendor_Var()) +
+                   tm_symbols(col = "FACILITY MANAGEMENT VENDOR", size = "GROSS FLOOR AREA", alpha = 0.7, legend.col.show = F, scale = 1.5,
+                              popup.vars = c("Name of Building" = "NAME OF BUILDING", "Address" = "ADDRESS", "Typology" = "TYPOLOGY",
+                                            "Age of Building" = "AGE OF BUILDING", "Green Mark Award" = "GREEN MARK AWARD", "Year Of Certification" = "YEAR OF CERTIFICATION",
+                                            "Gross Floor Area" = "GROSS FLOOR AREA", "% of AC Floor Area" = "% OF AC FLOOR AREA", "Avg. Monthly Occupancy Rate" = "AVG. MONTHLY BUILDING OCCUPANCY RATE",
+                                            "Latest Energy Use (EUI)" = "LATEST ENERGY USE INTENSITY (EUI)", "Facility Management Vendor" = "FACILITY MANAGEMENT VENDOR", "Number of Smart FM Systems" = "NUMBER OF SMART FM SYSTEMS",
+                                            "Building Management System" = "BUILDING MANAGEMENT SYSTEM", "Air Conditioning & Mechanical Ventilation System" = "AIR CONDITIONING & MECHANICAL VENTILATION SYSTEM",
+                                            "Electrical & Energy Management System" = "ELECTRICAL & ENERGY MANAGEMENT SYSTEM", "Security & Occupancy System" = "SECURITY & OCCUPANCY SYSTEM",
+                                            "Fire Alarm System" = "FIRE ALARM SYSTEM", "Lift Management System" = "LIFT MANAGEMENT SYSTEM", 
+                                            "District Centralised Cooling System" = "DISTRICT CENTRALISED COOLING SYSTEM"
+                                            , "Recency of Data" = "RECENCY OF DATA")) +    
+                   tmap_options(basemaps = c("Esri.WorldGrayCanvas", "OneMapSG.Grey", "OpenStreetMap"),
+                                basemaps.alpha = c(0.8, 0.8, 0.8)) +
+                   tm_view(set.zoom.limits = c(14,16), symbol.size.fixed = T)
+ 
+    
+  })
+  
+  # Selection of Number of FM Systems (Reactive Variable)
 
   FM_Systems_Var <- reactive({
-    PDD_Buildings %>%
+    Buildings %>%
+      filter(`DISTRICT` %in% input$Systems_Area_Of_Study) %>%  
       filter(`NUMBER OF SMART FM SYSTEMS` %in% (input$FM_Systems_Count[1] : input$FM_Systems_Count[2]))
   })
   
@@ -256,24 +291,37 @@ server <- function(input, output, session){
     
     tmap_mode('view')
     
+    Systems_District <- reactive({
+      
+                        if (input$Systems_Area_Of_Study == "JLD"){
+                          Systems_District <- Jurong_Lake_District_Boundary
+                        }
+                        else if (input$Systems_Area_Of_Study == "JID"){
+                          Systems_District <- Jurong_Innovation_District_Boundary
+                        }
+                        else if (input$Systems_Area_Of_Study == "PDD"){
+                          Systems_District <- Punggol_Digital_District_Boundary
+                        }
+                        return(Systems_District)
+                      })
+    
     # popup.vars() is to hide away unneeded columns    
     
-    Systems_Tracker <- tm_shape(Punggol_Boundary) +
-      tm_polygons(alpha = 0.1, border.col = "red", lwd = 1.5, lty = "dotted") +
-      tm_shape(Punggol_Digital_District_Boundary) +
-      tm_polygons(alpha = 0.1, border.col = "red", lwd = 2) +
-      tm_shape(FM_Systems_Var()) +
-      tm_symbols(col = "NUMBER OF SMART FM SYSTEMS", size = "NUMBER OF SMART FM SYSTEMS", as.count = TRUE, palette = "Paired", alpha = 0.7, size.lim = 0,
-                 popup.vars = c("Name of Building" = "NAME OF BUILDING", "Address" = "ADDRESS", "Typology" = "TYPOLOGY",
-                                                                                "Age of Building" = "AGE OF BUILDING", "Green Mark Award" = "GREEN MARK AWARD", "Year Of Certification" = "YEAR OF CERTIFICATION",
-                                                                                "Gross Floor Area" = "GROSS FLOOR AREA", "% of AC Floor Area" = "% OF AC FLOOR AREA", "Avg. Monthly Occupancy Rate" = "AVG. MONTHLY BUILDING OCCUPANCY RATE",
-                                                                                "Latest Energy Use (EUI)" = "LATEST ENERGY USE INTENSITY (EUI)", "Facility Management Vendor" = "FACILITY MANAGEMENT VENDOR", "Number of Smart FM Systems" = "NUMBER OF SMART FM SYSTEMS",
-                                                                                "Building Management System" = "BUILDING MANAGEMENT SYSTEM", "Air Conditioning & Mechanical Ventilation System" = "AIR CONDITIONING & MECHANICAL VENTILATION SYSTEM",
-                                                                                "Electrical & Energy Management System" = "ELECTRICAL & ENERGY MANAGEMENT SYSTEM", "Security & Occupancy System" = "SECURITY & OCCUPANCY SYSTEM",
-                                                                                "Plumbing Management System" = "PLUMBING MANAGEMENT SYSTEM", "Recency of Data" = "RECENCY OF DATA")) +
-      tmap_options(basemaps = c("Esri.WorldGrayCanvas","OpenStreetMap", "Stamen.TonerLite"),
-                   basemaps.alpha = c(0.8, 0.8, 0.8)) +
-      tm_view(set.zoom.limits = c(14,16))
+    Systems_Tracker <- tm_shape(Systems_District()) +
+                       tm_polygons(alpha = 0.1, border.col = "red", lwd = 2, popup.vars = F, interactive = F) +
+                       tm_shape(FM_Systems_Var()) +
+                       tm_symbols(col = "NUMBER OF SMART FM SYSTEMS", size = "BUBBLE SCALING" , as.count = TRUE, palette = "Greens", alpha = 0.7, size.lim = 0, scale = 1, 
+                                  popup.vars = c("Name of Building" = "NAME OF BUILDING", "Address" = "ADDRESS", "Typology" = "TYPOLOGY",
+                                                "Age of Building" = "AGE OF BUILDING", "Green Mark Award" = "GREEN MARK AWARD", "Year Of Certification" = "YEAR OF CERTIFICATION",
+                                                "Gross Floor Area" = "GROSS FLOOR AREA", "% of AC Floor Area" = "% OF AC FLOOR AREA", "Avg. Monthly Occupancy Rate" = "AVG. MONTHLY BUILDING OCCUPANCY RATE",
+                                                "Latest Energy Use (EUI)" = "LATEST ENERGY USE INTENSITY (EUI)", "Facility Management Vendor" = "FACILITY MANAGEMENT VENDOR", "Number of Smart FM Systems" = "NUMBER OF SMART FM SYSTEMS",
+                                                "Building Management System" = "BUILDING MANAGEMENT SYSTEM", "Air Conditioning & Mechanical Ventilation System" = "AIR CONDITIONING & MECHANICAL VENTILATION SYSTEM",
+                                                "Electrical & Energy Management System" = "ELECTRICAL & ENERGY MANAGEMENT SYSTEM", "Security & Occupancy System" = "SECURITY & OCCUPANCY SYSTEM",
+                                                "Fire Alarm System" = "FIRE ALARM SYSTEM", "Lift Management System" = "LIFT MANAGEMENT SYSTEM", "District Centralised Cooling System" = "DISTRICT CENTRALISED COOLING SYSTEM",
+                                                "Recency of Data" = "RECENCY OF DATA")) +
+                       tmap_options(basemaps = c("Esri.WorldGrayCanvas", "OneMapSG.Grey", "OpenStreetMap"),
+                                   basemaps.alpha = c(0.8, 0.8, 0.8)) +
+                       tm_view(set.zoom.limits = c(14,16), symbol.size.fixed = T)
     
   })
   
@@ -281,19 +329,6 @@ server <- function(input, output, session){
 
 shinyApp(ui=ui, server=server)
 
-
-# icon <- reactive({
-#   if (input$Building_Systems == "BMS"){
-#     icon <- tmap_icons("www/black.png")
-#   }
-#   else if (input$Building_Systems == "SS"){
-#     icon <- tmap_icons("www/blue.png")
-#   }
-#   else if (input$Building_Systems == "ST"){
-#     icon <- tmap_icons("www/green.png")
-#   }
-#   return(icon)
-# })
 
 
 

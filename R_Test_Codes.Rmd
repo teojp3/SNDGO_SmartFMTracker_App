@@ -35,3 +35,30 @@ PG <- MPSZ[MPSZ$`PLN_AREA_N` == 'PUNGGOL', ]
 PG <- as_Spatial(PG)
 ```
 
+```{r}
+PDD <- st_read(dsn = "data", 
+                layer = "PDD_Boundary")
+
+PDD <- st_zm(PDD, drop = TRUE, what = "ZM")
+
+Punggol_Digital_District_Boundary <- as_Spatial(PDD)
+```
+```{r}
+JLD <- st_read(dsn = "data/JLD Boundary", 
+               layer = "JLD Boundary")
+
+JLD <- st_zm(JLD, drop = TRUE, what = "ZM")
+
+Jurong_Lake_District_Boundary <- as_Spatial(JLD)
+```
+
+
+```{r}
+JID <- st_read(dsn = "data/JID Boundary", 
+               layer = "JID")
+
+JID <- st_zm(JID, drop = TRUE, what = "ZM")
+
+Jurong_Innovation_District_Boundary <- as_Spatial(JID)
+```
+
