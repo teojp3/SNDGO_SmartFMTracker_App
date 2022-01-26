@@ -5,9 +5,9 @@ account: is415jp
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 5350934
-bundleId: 5463206
+bundleId: 5500223
 url: https://teojp3.shinyapps.io/sndgo_smartfmtracker_app/
-when: 1642049734.51814
-lastSyncTime: 1642049734.51814
+when: 1642994436.16591
+lastSyncTime: 1642994436.16591
 asMultiple: FALSE
 asStatic: FALSE

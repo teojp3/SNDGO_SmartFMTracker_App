@@ -130,6 +130,7 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                                    h4("SmartFMTracker allows for quick locating of Smart Buildings in the three areas of study."),
                                                    h4("Users will be able to identify those buildings
                                                       easily through a map visualisation, with the area of study demarcated in red on the map and the buildings as individual points on the map."),
+                                                   h4("Two kinds of tracking services are available for use: 1) By Facility Management Vendor, and 2) By Number of Facility Management Systems."),
                                                    width = 9)
                            )),
                   
@@ -171,7 +172,7 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                                                                 "Jurong Innovation District" = "JID"),
                                                                     selected = "JLD"),
                                                         sliderInput(inputId = "FM_Systems_Count", 
-                                                                    label = "Number of Smart FM Systems", 
+                                                                    label = "Select the Range for Number of Smart FM Systems", 
                                                                     value = c(0, 7), min = 0, max = 7),
                                                         img(src = 'Systems_Legend.png', height = "100%", width = "100%", 
                                                             style="display: block; margin-left: auto; margin-right: auto;"),
@@ -189,14 +190,20 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                                                      tmapOutput("Vendor_Map"),
                                                                      tags$br(),
                                                              tabsetPanel(
-                                                               id = "SmartFM_Info",
-                                                               tabPanel("About the Map Visualisation",
+                                                               id = "SmartFM_Vendor_Info",
+                                                               tabPanel("About the Vendor Map Visualisation",
                                                                         column(12,
-                                                                               h2("What can you infer from the Map Visualisation?"),
+                                                                               h2("What can you infer from the Vendor Map Visualisation?"),
                                                                                tags$br(),
-                                                                               h4("The demarcation in red sets the boundaries of the chosen Area of Study (e.g. Punggol Digital District)."),
-                                                                               h4("The numerous points on the map illustrates the georeferenced locations of the smart buildings in the area of study, 
-                                                                                  with relevant Smart FM systems that we can take reference from."),
+                                                                               h4("The demarcation in red sets the boundaries of the chosen Area of Study (e.g. Jurong Lake District), while the numerous points on the map 
+                                                                               illustrates the georeferenced locations of the smart buildings in the area of study, 
+                                                                                  with relevant information (shown upon clicking) that we can take reference from."),
+                                                                               h4("The primary insight one could get from the map is identifying the main FM Vendor the various buildings has contracted with,
+                                                                               whereby the various FM Vendors are color coded for easy identification (refer to Legend on the right)."),
+                                                                               h4("A secondary insight that can be derived from the map would be the relative sizing of the buildings in the chosen Area of Study.
+                                                                                  The bigger the GFA of a building, the larger their bubble would be on the map. This helps us identify which buildings are
+                                                                                  larger or smaller, as well as infer whether there's a correlation between the size of a building and its preferred choice of 
+                                                                                  FM Vendor (e.g. Smaller buildings tend to contract CBRE as their vendor of choice).")
                                                                         )))
                                                               )),
                                                      
@@ -209,14 +216,20 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                                                      tmapOutput("Systems_Map"),
                                                                      tags$br(),
                                                                      tabsetPanel(
-                                                                       id = "SmartFM_Info2",
-                                                                       tabPanel("About the Map Visualisation",
+                                                                       id = "SmartFM_Systems_Info",
+                                                                       tabPanel("About the Systems Map Visualisation",
                                                                                 column(12,
-                                                                                       h2("What can you infer from the Map Visualisation?"),
+                                                                                       h2("What can you infer from the Systems Map Visualisation?"),
                                                                                        tags$br(),
-                                                                                       h4("The demarcation in red sets the boundaries of the chosen Area of Study (e.g. Jurong LakeDistrict)."),
-                                                                                       h4("The numerous points on the map illustrates the georeferenced locations of the smart buildings in the area of study, 
-                                                                                  with relevant Smart FM systems that we can take reference from."),
+                                                                                       h4("The demarcation in red sets the boundaries of the chosen Area of Study (e.g. Jurong Lake District), while the numerous points on the map 
+                                                                                  illustrates the georeferenced locations of the smart buildings in the area of study, 
+                                                                                  with relevant information (shown upon clicking) that we can take reference from."),
+                                                                                       h4("The primary insight one could get from the map is identifying the Number of Smart FM Systems the various buildings have respectively,
+                                                                               whereby the summed amount are color coded for easy identification (refer to Legend on the right)."),
+                                                                                       h4("A secondary way of identifying the Number of FM Systems each building have is through the relative sizing of the
+                                                                                       bubbles on the map.
+                                                                                  The higher the number of Smart FM Systems a building has, the larger their bubble would be on the map. This gives planners a more intuitive way
+                                                                                  of identifying which buildings have weaker Smart FM capabilities, to allow them to better dedicate future resources for buildings in the Area of Study.")
                                                                         )))
                                                               )),
                                                      
@@ -260,7 +273,7 @@ server <- function(input, output, session){
     Map_Tracker <- tm_shape(Vendor_District()) +
                    tm_polygons(alpha = 0.1, border.col = "red", lwd = 2, popup.vars = F, interactive = F) +
                    tm_shape(FM_Vendor_Var()) +
-                   tm_symbols(col = "FACILITY MANAGEMENT VENDOR", size = "GROSS FLOOR AREA", alpha = 0.7, legend.col.show = F, scale = 1.5,
+                   tm_symbols(col = "FACILITY MANAGEMENT VENDOR", size = "GROSS FLOOR AREA", alpha = 0.7, legend.col.show = F, scale = 1.5, id = "NAME OF BUILDING",
                               popup.vars = c("Name of Building" = "NAME OF BUILDING", "Address" = "ADDRESS", "Typology" = "TYPOLOGY",
                                             "Age of Building" = "AGE OF BUILDING", "Green Mark Award" = "GREEN MARK AWARD", "Year Of Certification" = "YEAR OF CERTIFICATION",
                                             "Gross Floor Area" = "GROSS FLOOR AREA", "% of AC Floor Area" = "% OF AC FLOOR AREA", "Avg. Monthly Occupancy Rate" = "AVG. MONTHLY BUILDING OCCUPANCY RATE",
@@ -272,9 +285,9 @@ server <- function(input, output, session){
                                             , "Recency of Data" = "RECENCY OF DATA")) +    
                    tmap_options(basemaps = c("Esri.WorldGrayCanvas", "OneMapSG.Grey", "OpenStreetMap"),
                                 basemaps.alpha = c(0.8, 0.8, 0.8)) +
-                   tm_view(set.zoom.limits = c(14,16), symbol.size.fixed = T)
- 
-    
+                   tm_view(set.zoom.limits = c(14,16), symbol.size.fixed = T) +
+                   tm_scale_bar(position=c("left", "bottom"), size = 2)
+                  
   })
   
   # Selection of Number of FM Systems (Reactive Variable)
@@ -310,7 +323,7 @@ server <- function(input, output, session){
     Systems_Tracker <- tm_shape(Systems_District()) +
                        tm_polygons(alpha = 0.1, border.col = "red", lwd = 2, popup.vars = F, interactive = F) +
                        tm_shape(FM_Systems_Var()) +
-                       tm_symbols(col = "NUMBER OF SMART FM SYSTEMS", size = "BUBBLE SCALING" , as.count = TRUE, palette = "Greens", alpha = 0.7, size.lim = 0, scale = 1, 
+                       tm_symbols(col = "NUMBER OF SMART FM SYSTEMS", size = "BUBBLE SCALING" , as.count = TRUE, palette = "Greens", alpha = 0.7, size.lim = 0, scale = 1, id = "NAME OF BUILDING",
                                   popup.vars = c("Name of Building" = "NAME OF BUILDING", "Address" = "ADDRESS", "Typology" = "TYPOLOGY",
                                                 "Age of Building" = "AGE OF BUILDING", "Green Mark Award" = "GREEN MARK AWARD", "Year Of Certification" = "YEAR OF CERTIFICATION",
                                                 "Gross Floor Area" = "GROSS FLOOR AREA", "% of AC Floor Area" = "% OF AC FLOOR AREA", "Avg. Monthly Occupancy Rate" = "AVG. MONTHLY BUILDING OCCUPANCY RATE",
