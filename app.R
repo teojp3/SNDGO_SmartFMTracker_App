@@ -113,7 +113,7 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                                                for better coordination and flow of information to improve the productivity, effectiveness and sustainability of the nation's
                                                                buildings to overcome challenges faced today."),
                                                             h4("Therefore, our main focus for this initiative is to develop a web-based geospatial analytical tool dedicated to tracking smart buildings in Singapore,
-                                                               with relevant Smart FM systems that we can take reference from."),
+                                                               with relevant Smart FM systems and information that we can take reference from."),
                                                             h4("Through this geospatial application, we hope to enable users to quickly locate exemplar buildings in three chosen areas of study, which
                                                                specifically are the smart districts of Singapore; 1) Punggol Digital District, 2) Jurong Lake District, and 3) Jurong Innovation District.")),
                                                      column(7,align = 'center',
@@ -124,13 +124,30 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                                             ))),
                                                    tags$br(),
                                                    
-                                                   
                                                    h3(tags$strong("What can our application SmartFMTracker be used for?")),
                                                    tags$hr(),
+                                                   fluidRow(
+                                                       column(4, align="center",
+                                                              img(src = 'JLD.png', height = "60%", width = "60%", 
+                                                              style="display: block; margin-left: auto; margin-right: auto;"), 
+                                                              tags$a(href = "https://www.jld.gov.sg/", 
+                                                                     "Jurong Lake District")),
+                                                       column(4, align="center",
+                                                              img(src = 'PDD.png', height = "60%", width = "60%", 
+                                                              style="display: block; margin-left: auto; margin-right: auto;"),
+                                                              tags$a(href = "https://estates.jtc.gov.sg/pdd", 
+                                                                     "Punggol Digital District")),
+                                                       column(4, align="center",
+                                                              img(src = 'JID.png', height = "60%", width = "60%", 
+                                                              style="display: block; margin-left: auto; margin-right: auto;"),
+                                                              tags$a(href = "https://estates.jtc.gov.sg/jid", 
+                                                                     "Jurong Innovation District"))),
+                                                   tags$br(),
                                                    h4("SmartFMTracker allows for quick locating of Smart Buildings in the three areas of study."),
                                                    h4("Users will be able to identify those buildings
                                                       easily through a map visualisation, with the area of study demarcated in red on the map and the buildings as individual points on the map."),
                                                    h4("Two kinds of tracking services are available for use: 1) By Facility Management Vendor, and 2) By Number of Facility Management Systems."),
+                                                   tags$br(),
                                                    width = 9)
                            )),
                   
@@ -195,15 +212,30 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                                                         column(12,
                                                                                h2("What can you infer from the Vendor Map Visualisation?"),
                                                                                tags$br(),
-                                                                               h4("The demarcation in red sets the boundaries of the chosen Area of Study (e.g. Jurong Lake District), while the numerous points on the map 
-                                                                               illustrates the georeferenced locations of the smart buildings in the area of study, 
-                                                                                  with relevant information (shown upon clicking) that we can take reference from."),
+                                                                         fluidRow(
+                                                                                column(3,
+                                                                                   img(src = 'Red_Boundary.png', height = "60%", width = "60%", 
+                                                                                   style="display: block; margin-left: auto; margin-right: auto; border: 1px solid #000000")),
+                                                                                column(9,
+                                                                                   tags$br(),
+                                                                                   h4("The demarcation in red sets the boundaries of the chosen Area of Study (e.g. Jurong Lake District), while the numerous points on the map 
+                                                                                   illustrates the georeferenced locations of the smart buildings in the area of study, 
+                                                                                      with relevant information (shown upon clicking) that we can take reference from."))),
+                                                                         tags$br(),
+                                                                         tags$br(),
+                                                                         fluidRow(
+                                                                           column(3, 
+                                                                               img(src = 'Bubbles.png', height = "60%", width = "60%", 
+                                                                                   style="display: block; margin-left: auto; margin-right: auto; border: 1px solid #000000")),
+                                                                           column(9,
                                                                                h4("The primary insight one could get from the map is identifying the main FM Vendor the various buildings has contracted with,
                                                                                whereby the various FM Vendors are color coded for easy identification (refer to Legend on the right)."),
                                                                                h4("A secondary insight that can be derived from the map would be the relative sizing of the buildings in the chosen Area of Study.
-                                                                                  The bigger the GFA of a building, the larger their bubble would be on the map. This helps us identify which buildings are
-                                                                                  larger or smaller, as well as infer whether there's a correlation between the size of a building and its preferred choice of 
-                                                                                  FM Vendor (e.g. Smaller buildings tend to contract CBRE as their vendor of choice).")
+                                                                                  The bigger the GFA of a building, the larger their bubble would be on the map."), 
+                                                                               h4("This helps us identify which buildings are larger or smaller, as well as infer whether there's a correlation between the size 
+                                                                               of a building and its preferred choice of FM Vendor (e.g. Smaller buildings tend to contract CBRE as their vendor of choice)."))),
+                                                                         tags$br(),
+                                                                         tags$br()
                                                                         )))
                                                               )),
                                                      
@@ -221,15 +253,30 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                                                                 column(12,
                                                                                        h2("What can you infer from the Systems Map Visualisation?"),
                                                                                        tags$br(),
-                                                                                       h4("The demarcation in red sets the boundaries of the chosen Area of Study (e.g. Jurong Lake District), while the numerous points on the map 
-                                                                                  illustrates the georeferenced locations of the smart buildings in the area of study, 
-                                                                                  with relevant information (shown upon clicking) that we can take reference from."),
-                                                                                       h4("The primary insight one could get from the map is identifying the Number of Smart FM Systems the various buildings have respectively,
+                                                                                       fluidRow(
+                                                                                         column(3,
+                                                                                                img(src = 'Red_Boundary.png', height = "60%", width = "60%", 
+                                                                                                    style="display: block; margin-left: auto; margin-right: auto; border: 1px solid #000000")),
+                                                                                         column(9,
+                                                                                                tags$br(),
+                                                                                                h4("The demarcation in red sets the boundaries of the chosen Area of Study (e.g. Jurong Lake District), while the numerous points on the map 
+                                                                                   illustrates the georeferenced locations of the smart buildings in the area of study, 
+                                                                                      with relevant information (shown upon clicking) that we can take reference from."))),
+                                                                                       tags$br(),
+                                                                                       tags$br(),
+                                                                                       fluidRow(
+                                                                                         column(3, 
+                                                                                                img(src = 'Bubbles_Systems.png', height = "60%", width = "60%", 
+                                                                                                    style="display: block; margin-left: auto; margin-right: auto; border: 1px solid #000000")),
+                                                                                         column(9,
+                                                                                                h4("The primary insight one could get from the map is identifying the Number of Smart FM Systems the various buildings have respectively,
                                                                                whereby the summed amount are color coded for easy identification (refer to Legend on the right)."),
-                                                                                       h4("A secondary way of identifying the Number of FM Systems each building have is through the relative sizing of the
-                                                                                       bubbles on the map.
-                                                                                  The higher the number of Smart FM Systems a building has, the larger their bubble would be on the map. This gives planners a more intuitive way
-                                                                                  of identifying which buildings have weaker Smart FM capabilities, to allow them to better dedicate future resources for buildings in the Area of Study.")
+                                                                                                h4("A secondary way of identifying the Number of FM Systems each building have is through the relative sizing of the
+                                                                                       bubbles on the map."), 
+                                                                                                h4("The higher the number of Smart FM Systems a building has, the larger their bubble would be on the map. This gives planners a more intuitive way
+                                                                                  of identifying which buildings have weaker Smart FM capabilities, to allow them to better dedicate future resources for buildings in the Area of Study."))),
+                                                                                       tags$br(),
+                                                                                       tags$br()
                                                                         )))
                                                               )),
                                                      
@@ -286,7 +333,7 @@ server <- function(input, output, session){
                    tmap_options(basemaps = c("Esri.WorldGrayCanvas", "OneMapSG.Grey", "OpenStreetMap"),
                                 basemaps.alpha = c(0.8, 0.8, 0.8)) +
                    tm_view(set.zoom.limits = c(14,16), symbol.size.fixed = T) +
-                   tm_scale_bar(position=c("left", "bottom"), size = 2)
+                   tm_scale_bar(position=c("left", "bottom"), lwd = 50, size = 2)
                   
   })
   
@@ -334,7 +381,8 @@ server <- function(input, output, session){
                                                 "Recency of Data" = "RECENCY OF DATA")) +
                        tmap_options(basemaps = c("Esri.WorldGrayCanvas", "OneMapSG.Grey", "OpenStreetMap"),
                                    basemaps.alpha = c(0.8, 0.8, 0.8)) +
-                       tm_view(set.zoom.limits = c(14,16), symbol.size.fixed = T)
+                       tm_view(set.zoom.limits = c(14,16), symbol.size.fixed = T)+
+                       tm_scale_bar(position=c("left", "bottom"), lwd = 50, size = 2)
     
   })
   
