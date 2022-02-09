@@ -1,3 +1,5 @@
+# Import required libraries/packages #
+
 library(shiny)
 library(tidyverse)
 library(tools)
@@ -62,15 +64,6 @@ Buildings <- read_csv("data/Aspatial/Buildings.csv")
 
 Buildings <- st_as_sf(Buildings, coords = c("LONGITUDE", "LATITUDE"), crs = 4326) %>%
   st_transform(crs = 3414)
-
-### JLD Buildings
-
-JLD_Buildings <- st_read(dsn = "data/JLD Boundary", 
-               layer = "JLD_Buildings")
-
-JLD_Buildings <- st_zm(JLD_Buildings, drop = TRUE, what = "ZM")
-
-JLD_Buildings <- as_Spatial(JLD_Buildings)
 
 
 
